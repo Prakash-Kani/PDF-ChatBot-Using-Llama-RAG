@@ -1,16 +1,22 @@
 from flask import Flask, request, jsonify
 from chatbot import Conversational_Chain
+from doc_loader import ingest
 import os
 
 llm  = Conversational_Chain()
 app = Flask(__name__)
 
 
-UPLOAD_FOLDER = './Uploads'
+UPLOAD_FOLDER = 'Uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+
+DB_FOLDER = 'Databases'
+if not os.path.exists(DB_FOLDER):
+    os.makedirs(DB_FOLDER)
+app.config['DB_FOLDER'] = DB_FOLDER
 
 
 
@@ -57,7 +63,9 @@ def ingest_pdf():
     # Save the PDF file to the server
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     pdf_file.save(file_path)
-    print(file_path, filename)
+
+    persist_directory = os.path.join(app.config['DB_FOLDER'], filename)
+    ingest(file_path=file_path, persist_directory = persist_directory)
 
     # Process the PDF (if you need to pass the file to the chatbot)
     # Example: llm.ingest(file_path)  # If needed for RAG model ingestion

@@ -100,7 +100,5 @@ def Conversational_Chain():
                                         history_messages_key="chat_history",
                                         output_messages_key="answer",
                                     )
-print(Conversational_Chain().invoke({"input": 'what is the chemical bonding?'},
-                                                    config={"configurable": {"session_id": 123}},
-                                                    )["answer"])
+
 
