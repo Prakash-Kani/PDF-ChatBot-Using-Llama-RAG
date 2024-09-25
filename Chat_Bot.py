@@ -2,7 +2,6 @@ from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
-# from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.llms import Ollama
 from langchain.chains import create_history_aware_retriever
@@ -12,14 +11,18 @@ from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
 model_name = 'llama3.1:latest'
-
+embeddings_model_name =  "all-MiniLM-L6-v2"
 
 model = Ollama(model = model_name)
+# embeddings = HuggingFaceEmbeddings(model_name=embeddings_model_name)
 
+# db = Chroma(persist_directory='physics-chemical', embedding_function=embeddings)
+
+# retriever = db.as_retriever()
 
 store = {}
 
-def History_Chain():
+def History_Chain(retriever):
     contextualize_q_system_prompt = (
                                         "Given a chat history and the latest user question "
                                         "which might reference context in the chat history, "
@@ -75,8 +78,8 @@ def Question_Answer_Chain():
     question_answer_chain = create_stuff_documents_chain(model, qa_prompt)
     return question_answer_chain
 
-def RAG_Chain():
-    history_aware_retriever = History_Chain()
+def RAG_Chain(retriever):
+    history_aware_retriever = History_Chain(retriever)
     question_answer_chain = Question_Answer_Chain()
     return create_retrieval_chain(history_aware_retriever, question_answer_chain)
 

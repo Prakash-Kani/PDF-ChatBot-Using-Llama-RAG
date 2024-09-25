@@ -1,9 +1,44 @@
 from flask import Flask, request, jsonify
-from chatbot import Conversational_Chain
+from Chat_Bot import *
 from doc_loader import ingest
 import os
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
 
-llm  = Conversational_Chain()
+
+embeddings_model_name =  "all-MiniLM-L6-v2"
+
+embeddings = HuggingFaceEmbeddings(model_name=embeddings_model_name)
+store ={}
+
+def get_session_history1(session_id: str, ai_message) -> BaseChatMessageHistory:
+    if session_id not in store:
+        store[session_id] = ChatMessageHistory()
+        # store[session_id].add_user_message("What is the title of the given context?")
+        store[session_id].add_ai_message(ai_message)
+    return store[session_id]
+def get_session_history(session_id: str) -> BaseChatMessageHistory:
+    if session_id not in store:
+        store[session_id] = ChatMessageHistory()
+        # store[session_id].add_user_message("What is the title of the given context?")
+        # store[session_id].add_ai_message(ai_message)
+    return store[session_id]
+def Conversational_Chain(filename):
+
+    db = Chroma(persist_directory= filename, embedding_function=embeddings)
+
+    retriever = db.as_retriever()
+    rag_chain = RAG_Chain(retriever)
+    return RunnableWithMessageHistory(
+                                        rag_chain,
+                                        get_session_history,
+                                        input_messages_key="input",
+                                        history_messages_key="chat_history",
+                                        output_messages_key="answer",
+                                    )
+
+
 app = Flask(__name__)
 
 
@@ -28,11 +63,27 @@ def invoke_conversational_rag_chain():
     # Ensure the input is provided
     if 'input' not in data:
         return jsonify({'error': 'No input provided'}), 400
+    
+    if 'filename' not in data:
+        return jsonify({'error': 'No filename provided'}), 400
 
     # Set up the configuration, if any
     config = data.get('config', {})
+    filename = data['filename']
 
-    # Invoke the conversational RAG chain
+    session_Id = config['session_id']
+    text_file_path = os.path.join(app.config['UPLOAD_FOLDER'], f'{filename}.txt')
+    with open(text_file_path, 'r') as text_file:
+        ai_message = text_file.read()
+
+    if session_Id and ai_message:
+        get_session_history1(session_Id, ai_message)
+
+
+    db_path = os.path.join(app.config['DB_FOLDER'], filename)
+    llm = Conversational_Chain(filename=db_path)
+
+    # # Invoke the conversational RAG chain
     result = llm.invoke(
         {"input": data['input']},
         config=config
@@ -55,6 +106,8 @@ def ingest_pdf():
     # Get the filename and PDF file from the request
     filename = request.form['filename']
     pdf_file = request.files['pdf']
+    topic = request.form['topic']
+    history = f"Let's dive into {topic}. What specific topic or question can I help you with today?"
 
     # Check if the file is a valid PDF
     if pdf_file.filename == '' or not pdf_file.filename.endswith('.pdf'):
@@ -64,11 +117,15 @@ def ingest_pdf():
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     pdf_file.save(file_path)
 
+    if topic:
+        text_file_path = os.path.join(app.config['UPLOAD_FOLDER'], f'{filename}.txt')
+        with open(text_file_path, 'w') as text_file:
+            text_file.write(history)
+
+
     persist_directory = os.path.join(app.config['DB_FOLDER'], filename)
     ingest(file_path=file_path, persist_directory = persist_directory)
 
-    # Process the PDF (if you need to pass the file to the chatbot)
-    # Example: llm.ingest(file_path)  # If needed for RAG model ingestion
 
     # Return success response
     return jsonify({'message': 'File uploaded and processed successfully'}), 200
