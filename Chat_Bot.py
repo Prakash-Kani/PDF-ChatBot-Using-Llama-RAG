@@ -14,11 +14,7 @@ model_name = 'llama3.1:latest'
 embeddings_model_name =  "all-MiniLM-L6-v2"
 
 model = Ollama(model = model_name)
-# embeddings = HuggingFaceEmbeddings(model_name=embeddings_model_name)
 
-# db = Chroma(persist_directory='physics-chemical', embedding_function=embeddings)
-
-# retriever = db.as_retriever()
 
 store = {}
 
@@ -46,16 +42,7 @@ def History_Chain(retriever):
 
 
 def Question_Answer_Chain():
-    # system_prompt = (
-    #                     "You are an assistant for question-answering tasks. "
-    #                     "Use the following pieces of retrieved context to answer "
-    #                     "the question. If you don't know the answer, say that you "
-    #                     "don't know."
-    #                      "If the context does not contain the answer, respond with 'The information is not available in the provided context.'"
-    #                     "The user is greeting you. Respond appropriately as a friendly assistant."
-    #                     "\n\n"
-    #                     "{context}"
-    #                 )
+
 
     system_prompt = (
         "You are an assistant for question-answering tasks. "
@@ -63,7 +50,7 @@ def Question_Answer_Chain():
         "the question. If you don't know the answer, say that you "
         "don't know. Use three sentences maximum and keep the "
         "answer concise."
-        # "If the context does not contain the answer, respond with 'The information is not available in the provided context.'"
+        "If the context does not contain the answer, respond with 'The information is not available in the provided context.'"
         # "The user is greeting you. Respond appropriately as a friendly assistant."
         "\n\n"
         "{context}"
