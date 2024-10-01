@@ -17,14 +17,11 @@ store ={}
 def get_session_history1(session_id: str, ai_message) -> BaseChatMessageHistory:
     if session_id not in store:
         store[session_id] = ChatMessageHistory()
-        # store[session_id].add_user_message("What is the title of the given context?")
         store[session_id].add_ai_message(ai_message)
     return store[session_id]
 def get_session_history(session_id: str) -> BaseChatMessageHistory:
     if session_id not in store:
         store[session_id] = ChatMessageHistory()
-        # store[session_id].add_user_message("What is the title of the given context?")
-        # store[session_id].add_ai_message(ai_message)
     return store[session_id]
 def Conversational_Chain(filename):
 
@@ -54,6 +51,10 @@ DB_FOLDER = 'Databases'
 if not os.path.exists(DB_FOLDER):
     os.makedirs(DB_FOLDER)
 app.config['DB_FOLDER'] = DB_FOLDER
+
+REPORT_FOLDER = 'Reports'
+if not os.path.exists(REPORT_FOLDER):
+    os.makedirs(REPORT_FOLDER)
 
 
 
