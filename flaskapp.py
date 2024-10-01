@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from Chat_Bot import *
 from doc_loader import ingest
+from report_generation import create_chain
 import os
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
@@ -129,6 +130,29 @@ def ingest_pdf():
 
     # Return success response
     return jsonify({'message': 'File uploaded and processed successfully'}), 200
+
+
+
+@app.route('/report', methods=['POST'])
+def report_generator():
+    # Get the input data from the request
+    data = request.get_json()
+
+    # Ensure the input is provided
+    if 'course_name' not in data:
+        return jsonify({'error': 'No course_name provided'}), 400
+
+    filename = data['course_name']
+    if filename:
+        chain = create_chain(course_name=filename)
+
+        result = chain.invoke("generate the report")
+
+        response = {'report': result}
+        # Return the response as JSON
+        return jsonify(response)
+    else:
+        return jsonify({'error': 'Invalid Course Name'}), 400
 
 if __name__ == '__main__':
     app.run(host = '0.0.0.0', port = 5000, debug=True)
