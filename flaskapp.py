@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from Chat_Bot import *
 from doc_loader import ingest
 from report_generation import create_chain
+from datetime import datetime as dt
 import os
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
@@ -91,7 +92,7 @@ def invoke_conversational_rag_chain():
     )
 
     # Extract the answer from the result
-    response = {'answer': result.get('answer')}
+    response = {'answer': result.get('answer'), 'time_stamp': dt.now()}
 
     # Return the response as JSON
     return jsonify(response)
@@ -148,7 +149,7 @@ def report_generator():
 
         result = chain.invoke("generate the report")
 
-        response = {'report': result}
+        response = {'report': result, 'time_stamp': dt.now()}
         # Return the response as JSON
         return jsonify(response)
     else:
