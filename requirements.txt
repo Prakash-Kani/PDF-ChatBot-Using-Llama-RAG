@@ -8,7 +8,8 @@ pymupdf
 sentence-transformers
 langchain_huggingface
 
-
+pymongo
+pandas
 streamlit
 flask
 python-dotenv
